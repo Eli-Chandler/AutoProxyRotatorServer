@@ -7,7 +7,7 @@ This is an asynchronous, fully automatic proxy server.
 What does this mean? Instead of maintaining a proxy list, we can simply do this:
 
 
-r = await session.get('https://www.example.com', proxy=)
+r = await session.get('https://www.example.com', proxy=http://our-proxy-server.com)
 
 And have everything handled for us internally!
 
