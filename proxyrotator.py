@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 import logging
 import os
 
+logging.basicConfig(level=logging.INFO)
+
 proxy_schema = {
     '_id': str,
     'proxy': str,
@@ -30,17 +32,26 @@ class ProxyRotator:
         self._proxy6_api_key = proxy6_api_key
         self._db_uri = db_uri
 
-    async def static(self, method, url, headers, data=None):
+    async def static(self, method, url, headers, data={}, j=None):
         proxy = await self._get_static_proxy(url)
-        return await self.request(proxy['proxy'], method, url, headers, data)
+        return await self.request(proxy, method, url, headers, data)
 
-    async def rotating(self, method, url, headers, data=None):
+    async def get_static(self, url):
+        proxy = await self._get_static_proxy(url)
+        return proxy['proxy']
+
+    async def rotating(self, method, url, headers, data={}, j=None):
         proxy = await self._get_rotating_proxy(url)
-        return await self.request()
+        return await self.request(proxy, method, url, headers, data, j=None)
 
-    async def request(self, proxy, method, url, headers, data=None):
+    async def get_rotating(self, url):
+        proxy = await self._get_rotating_proxy(url)
+        return proxy['proxy']
+
+    async def request(self, proxy, method, url, headers, data={}, j=None):
+        logging.info(f'Requesting {url} with {proxy["_id"]}')
         async with aiohttp.ClientSession() as session:
-            async with session.request(method, url, headers=headers, data=data, proxy=proxy) as r:
+            async with session.request(method, url, headers=headers, data=data, proxy=proxy['proxy'], json=j) as r:
                 headers['proxy'] = proxy['_id']
                 return await r.read(), r.status, headers
 
@@ -196,8 +207,6 @@ async def main():
     logging.basicConfig(level=logging.INFO)
     await p.setup()
     p._get_domain('https://item.taobao.com/item.htm?id=626235369969')
-    #await p._add_proxy(21055269, 'http://7dVjoS:omMtRx@149.126.239.70:9776', 'ipv4', [], datetime.utcnow() + timedelta(days=30))
-    #await p._update_blocked_sites({'_id':21055269}, 'pandabuy.com')
     proxy = await p._get_static_proxy('pandabuy.com')
     print(proxy)
     proxy = await p._get_static_proxy('pandabuy.com')
