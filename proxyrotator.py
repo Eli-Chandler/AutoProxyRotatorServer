@@ -52,12 +52,14 @@ class ProxyRotator:
         async with aiohttp.ClientSession() as session:
             async with session.request(method, url, headers=headers, cookies=cookies, params=params, data=data,
                                        json=json_data, proxy=proxy['proxy']) as response:
-                if response.status == 502:
+                if response.status in [502, 403]:
+                    logging.info(f'Recieved {response.status}, marking {proxy["proxy"]} as blocked for {self._get_domain(url)}')
                     await self.update_blocked_sites(proxy, url)
                 content = await response.read()
 
                 response_headers = {key.lower():value for key, value in dict(response.headers).items()}
                 response_headers.pop('content-encoding', None)
+                response_headers.pop('content-length', None)
 
                 return content, response.status, response_headers
 
@@ -119,8 +121,10 @@ class ProxyRotator:
 
         proxy = await self._get_proxy_by_id(self.static_proxy_ids[domain])
 
+        print(proxy['blocked_sites'])
+
         if domain in proxy['blocked_sites']:
-            await self._update_static_proxy()
+            await self._update_static_proxy(url, type)
             proxy = await self._get_proxy_by_id(self.static_proxy_ids)
 
         return proxy
@@ -128,7 +132,7 @@ class ProxyRotator:
     async def _get_proxy_by_id(self, _id):
         return await self.proxies_collection.find_one({'_id': _id})
 
-    async def _update_static_proxy(self, url='ipv4', type='ipv4'):
+    async def _update_static_proxy(self, url='', type='ipv4'):
         domain = self._get_domain(url)
         logging.info(f'Getting new static proxy for {domain}')
         self.static_proxy_ids[domain] = (await self._get_proxy(url, type))['_id']
@@ -163,8 +167,10 @@ class ProxyRotator:
         return proxies[self.rotating_proxy_counts[domain] % len(proxies)]
 
     async def _get_proxy(self, url='', type='ipv4'):
+
         if url is not None:
-            query = {'blocked_sites': {'$ne': url}, 'type': type}
+            domain = self._get_domain(url)
+            query = {'blocked_sites': {'$ne': domain}, 'type': type}
 
         proxy = await self.proxies_collection.find_one(query)
 
@@ -213,6 +219,8 @@ async def main():
     p = ProxyRotator(proxy6_api_key, db_uri)
     logging.basicConfig(level=logging.INFO)
     await p.setup()
+
+
     p._get_domain('https://item.taobao.com/item.htm?id=626235369969')
     proxy = await p._get_static_proxy('pandabuy.com')
     print(proxy)

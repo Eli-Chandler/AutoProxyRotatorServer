@@ -12,11 +12,16 @@ p = ProxyRotator(proxy6_api_key, db_uri)
 
 @app.route('/', methods=['POST'])
 async def proxy_request():
-    request_token = request.args.get('token', '')
+
+
+
+    payload = await request.get_json()
+
+    request_token = payload.get('token', '')
+    print(token, request_token)
     if request_token != token:
         return 'Bad Token', 403, {}
 
-    payload = await request.get_json()
     proxy_method = payload.get('proxy_method')
     method = payload.get('method')
     url = payload.get('url')
