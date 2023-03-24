@@ -1,12 +1,12 @@
 import asyncio
 import datetime
-
-import aiohttp
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
-import tldextract
-from datetime import datetime, timedelta
 import logging
 import os
+from datetime import datetime, timedelta
+
+import aiohttp
+import tldextract
+from motor.motor_asyncio import AsyncIOMotorClient
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,11 +19,9 @@ proxy_schema = {
 }
 
 
-
-
 class ProxyRotator:
     proxies_collection = None
-    session=None
+    session = None
     static_proxy_ids = {}
     rotating_proxy_counts = {}
 
@@ -90,7 +88,8 @@ class ProxyRotator:
 
                     expiration_date = datetime.utcnow() + timedelta(days=30)
 
-                    logging.info(f'Succesfully purchased proxy {id} {proxy_ip} {type} {blocked_sites} {expiration_date}')
+                    logging.info(
+                        f'Succesfully purchased proxy {id} {proxy_ip} {type} {blocked_sites} {expiration_date}')
                     await self._add_proxy(id, proxy_ip, type, blocked_sites, expiration_date)
             else:
                 logging.error(f'Error fetching proxies {await r.text()}')
@@ -153,8 +152,7 @@ class ProxyRotator:
         async for doc in cursor:
             proxies.append(doc)
 
-        return proxies[self.rotating_proxy_counts[domain]%len(proxies)]
-
+        return proxies[self.rotating_proxy_counts[domain] % len(proxies)]
 
     async def _get_proxy(self, url='', type='ipv4'):
         if url is not None:
@@ -163,7 +161,7 @@ class ProxyRotator:
         proxy = await self.proxies_collection.find_one(query)
 
         if proxy is None and self.purchase_enabled:
-            return await self.purchase_proxy() # If we can't find an unblocked proxy we will buy a new one!
+            return await self.purchase_proxy()  # If we can't find an unblocked proxy we will buy a new one!
 
         return proxy
 
@@ -199,6 +197,7 @@ class ProxyRotator:
     def _get_domain(self, url):
         return tldextract.extract(url).registered_domain
 
+
 async def main():
     db_uri = os.environ.get('DB_URI')
     proxy6_api_key = os.environ.get('PROXY6')
@@ -216,11 +215,9 @@ async def main():
     proxy = await p._get_rotating_proxy('pandabuy.com')
     print(proxy)
 
+    # print(proxy)
 
-    #print(proxy)
-
-
-    #await p._get_proxy()
+    # await p._get_proxy()
 
 
 if __name__ == '__main__':
