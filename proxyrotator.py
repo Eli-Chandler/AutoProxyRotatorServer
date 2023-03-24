@@ -52,6 +52,8 @@ class ProxyRotator:
         async with aiohttp.ClientSession() as session:
             async with session.request(method, url, headers=headers, cookies=cookies, params=params, data=data,
                                        json=json_data, proxy=proxy['proxy']) as response:
+                if response.status == 502:
+                    await self.update_blocked_sites(proxy, url)
                 content = await response.read()
 
                 response_headers = {key.lower():value for key, value in dict(response.headers).items()}
@@ -132,11 +134,11 @@ class ProxyRotator:
         self.static_proxy_ids[domain] = (await self._get_proxy(url, type))['_id']
         logging.info(f'Assigned {self.static_proxy_ids[domain]} to {domain}')
 
-    async def _update_blocked_sites(self, proxy, url):
+    async def update_blocked_sites(self, proxy, url):
         domain = self._get_domain(url)
         if domain in self.static_proxy_ids:
             if self.static_proxy_ids[domain] == proxy['_id']:
-                await self._update_static_proxy(domain, 'ipv4')
+                self.static_proxy_ids.pop(domain) # Remove proxy from our static proxies dictionary if it is blocked on that site
 
         await self.proxies_collection.update_one(
             {'_id': proxy['_id']},
