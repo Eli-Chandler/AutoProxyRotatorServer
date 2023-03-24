@@ -4,7 +4,7 @@
 
 This is an asynchronous, fully automatic proxy server.
 
-What does this mean? Instead of maintaing a proxy list, we can simply do this:
+What does this mean? Instead of maintaining a proxy list, we can simply do this:
 
 r = await session.get('https://www.example.com', proxy='http://your_proxy_server/rotate')
 
