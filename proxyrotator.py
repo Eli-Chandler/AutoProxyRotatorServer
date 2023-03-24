@@ -8,6 +8,7 @@ import aiohttp
 import tldextract
 from motor.motor_asyncio import AsyncIOMotorClient
 
+
 logging.basicConfig(level=logging.INFO)
 
 proxy_schema = {
@@ -30,28 +31,33 @@ class ProxyRotator:
         self._proxy6_api_key = proxy6_api_key
         self._db_uri = db_uri
 
-    async def static(self, method, url, headers, data={}, j=None):
+    async def static(self, method, url, headers, cookies, params, data, json_data):
         proxy = await self._get_static_proxy(url)
-        return await self.request(proxy, method, url, headers, data)
+        return await self.request(proxy, method, url, headers, cookies, params, data, json_data)
 
     async def get_static(self, url):
         proxy = await self._get_static_proxy(url)
         return proxy['proxy']
 
-    async def rotating(self, method, url, headers, data={}, j=None):
+    async def rotating(self, method, url, headers, cookies, params, data, json_data):
         proxy = await self._get_rotating_proxy(url)
-        return await self.request(proxy, method, url, headers, data, j=None)
+        return await self.request(proxy, method, url, headers, cookies, params, data, json_data)
 
     async def get_rotating(self, url):
         proxy = await self._get_rotating_proxy(url)
         return proxy['proxy']
 
-    async def request(self, proxy, method, url, headers, data={}, j=None):
+    async def request(self, proxy, method, url, headers, cookies, params, data, json_data):
         logging.info(f'Requesting {url} with {proxy["_id"]}')
         async with aiohttp.ClientSession() as session:
-            async with session.request(method, url, headers=headers, data=data, proxy=proxy['proxy'], json=j) as r:
-                headers['proxy'] = proxy['_id']
-                return await r.read(), r.status, headers
+            async with session.request(method, url, headers=headers, cookies=cookies, params=params, data=data,
+                                       json=json_data, proxy=proxy['proxy']) as response:
+                content = await response.read()
+
+                response_headers = {key.lower():value for key, value in dict(response.headers).items()}
+                response_headers.pop('content-encoding', None)
+
+                return content, response.status, response_headers
 
     async def purchase_proxy(self):
         logging.info('Purchasing proxy')
