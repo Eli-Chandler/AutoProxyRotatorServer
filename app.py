@@ -8,7 +8,7 @@ db_uri = os.environ.get('DB_URI')
 proxy6_api_key = os.environ.get('PROXY6')
 token = os.environ.get('TOKEN') # Token needed for requests to be accepted
 
-p = ProxyRotator(proxy6_api_key, db_uri)
+p = ProxyRotator(proxy6_api_key, db_uri, True)
 
 @app.route('/', methods=['POST'])
 async def proxy_request():
