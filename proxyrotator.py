@@ -64,7 +64,7 @@ class ProxyRotator:
                     logging.info(f'RATELIMIT ROTATE: Set {self._get_domain(url)} to {new_proxy["_id"]}')
                     print(self.static_proxy_ids)
                 print('Proxy after:', proxy)
-                logging.info(f'Recieved STATUS: {response.status} CONTENT: {response.content_type} with {proxy["_id"]}')
+                logging.info(f'Recieved STATUS: {response.status} CONTENT: {response.content_type} with {proxy}')
                 content = await response.read()
                 response_headers = {key.lower():value for key, value in dict(response.headers).items()}
                 response_headers.pop('content-encoding', None)
