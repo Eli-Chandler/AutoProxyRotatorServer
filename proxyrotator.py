@@ -52,11 +52,12 @@ class ProxyRotator:
         async with aiohttp.ClientSession() as session:
             async with session.request(method, url, headers=headers, cookies=cookies, params=params, data=data,
                                        json=json_data, proxy=proxy['proxy']) as response:
+
                 if response.status in [502, 403]:
                     logging.info(f'Recieved {response.status}, marking {proxy["proxy"]} as blocked for {self._get_domain(url)}')
                     await self.update_blocked_sites(proxy, url)
+                logging.info(f'Recieved {response.status} with {proxy["_id"]}')
                 content = await response.read()
-
                 response_headers = {key.lower():value for key, value in dict(response.headers).items()}
                 response_headers.pop('content-encoding', None)
                 response_headers.pop('content-length', None)
