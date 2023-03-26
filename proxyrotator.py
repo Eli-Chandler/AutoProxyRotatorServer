@@ -61,7 +61,8 @@ class ProxyRotator:
                     logging.info(f'Recieved {response.status}, indicating rate limiting on {proxy["proxy"]}. Rotating proxy.')
                     new_proxy = await self._get_rotating_proxy(url)
                     self.static_proxy_ids[self._get_domain(url)] = new_proxy['_id']
-                    logging.info(f'Set {self._get_domain(url)} to {new_proxy["_id"]}')
+                    logging.info(f'RATELIMIT ROTATE: Set {self._get_domain(url)} to {new_proxy["_id"]}')
+                    print(self.static_proxy_ids)
                 print('Proxy after:', proxy)
                 logging.info(f'Recieved STATUS: {response.status} CONTENT: {response.content_type} with {proxy["_id"]}')
                 content = await response.read()
