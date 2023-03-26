@@ -59,7 +59,7 @@ class ProxyRotator:
 
                 if response.status in [429]:
                     logging.info(f'Recieved {response.status}, indicating rate limiting on {proxy["proxy"]}. Rotating proxy.')
-                    self.static_proxy_ids[self._get_domain(url)] = self.get_rotating_proxy(url)['id']
+                    self.static_proxy_ids[self._get_domain(url)] = self._get_rotating_proxy(url)['id']
 
                 logging.info(f'Recieved STATUS: {response.status} CONTENT: {response.content_type} with {proxy["_id"]}')
                 content = await response.read()
