@@ -56,6 +56,11 @@ class ProxyRotator:
                 if response.status in [502, 403]:
                     logging.info(f'Recieved {response.status}, marking {proxy["proxy"]} as blocked for {self._get_domain(url)}')
                     await self.update_blocked_sites(proxy, url)
+
+                if response.status in [429]:
+                    logging.info(f'Recieved {response.status}, indicating rate limiting on {proxy["proxy"]}. Rotating proxy.')
+                    self.static_proxy_ids[self._get_domain(url)] = self.get_rotating_proxy(url)['id']
+
                 logging.info(f'Recieved STATUS: {response.status} CONTENT: {response.content_type} with {proxy["_id"]}')
                 content = await response.read()
                 response_headers = {key.lower():value for key, value in dict(response.headers).items()}
